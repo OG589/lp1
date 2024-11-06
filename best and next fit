@@ -1,0 +1,103 @@
+import java.util.Scanner;
+
+public class BestNextFit {
+
+    public static void bestFitAlgo(int blocks[], int m, int processes[], int n) {
+        int allocation[] = new int[n];
+        for (int i = 0; i < n; i++) allocation[i] = -1;
+
+        for (int i = 0; i < n; i++) {
+            int bestIdx = -1;
+            for (int j = 0; j < m; j++) {
+                if (blocks[j] >= processes[i]) {
+                    if (bestIdx == -1 || blocks[bestIdx] > blocks[j]) {
+                        bestIdx = j;
+                    }
+                }
+            }
+            if (bestIdx != -1) {
+                allocation[i] = bestIdx;
+                blocks[bestIdx] -= processes[i];
+            }
+        }
+        printAllocation(processes, allocation);
+    }
+
+    public static void nextFitAlgo(int blocks[], int m, int processes[], int n) {
+        int allocation[] = new int[n];
+        for (int i = 0; i < n; i++) allocation[i] = -1;
+
+        int lastPos = 0;
+        for (int i = 0; i < n; i++) {
+            int j = lastPos;
+            do {
+                if (blocks[j] >= processes[i]) {
+                    allocation[i] = j;
+                    blocks[j] -= processes[i];
+                    lastPos = j;
+                    break;
+                }
+                j = (j + 1) % m;
+            } while (j != lastPos);
+        }
+        printAllocation(processes, allocation);
+    }
+
+    public static void printAllocation(int processes[], int allocation[]) {
+        System.out.println("\nProcess No.\tProcess Size\tBlock no.");
+        for (int i = 0; i < processes.length; i++) {
+            System.out.print(" " + (i + 1) + "\t\t" + processes[i] + "\t\t");
+            if (allocation[i] != -1)
+                System.out.print(allocation[i] + 1);
+            else
+                System.out.print("Not Allocated");
+            System.out.println();
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter the number of blocks: ");
+        int m = sc.nextInt();
+        int blocks[] = new int[m];
+        System.out.println("Enter the block sizes:");
+        for (int i = 0; i < m; i++) {
+            blocks[i] = sc.nextInt();
+        }
+
+        System.out.print("Enter the number of processes: ");
+        int n = sc.nextInt();
+        int processes[] = new int[n];
+        System.out.println("Enter the process sizes:");
+        for (int i = 0; i < n; i++) {
+            processes[i] = sc.nextInt();
+        }
+
+        while (true) {
+            System.out.println("\nChoose a Memory Allocation Strategy:");
+            System.out.println("1. Best Fit");
+            System.out.println("2. Next Fit");
+            System.out.println("3. Exit");
+            System.out.print("Enter your choice: ");
+            int choice = sc.nextInt();
+
+            int[] tempBlocks = blocks.clone();  // Clone blocks array to preserve original block sizes
+
+            switch (choice) {
+                case 1:
+                    bestFitAlgo(tempBlocks, m, processes, n);
+                    break;
+                case 2:
+                    nextFitAlgo(tempBlocks, m, processes, n);
+                    break;
+                case 3:
+                    System.out.println("Exiting...");
+                    sc.close();
+                    return;
+                default:
+                    System.out.println("Invalid choice! Please try again.");
+            }
+        }
+    }
+}
