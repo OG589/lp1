@@ -1,0 +1,127 @@
+import java.util.Arrays;
+import java.util.Scanner;
+
+class Process implements Comparable<Process> {
+    int pid, arrivalTime, burstTime, completionTime, turnaroundTime, waitingTime, remainingTime;
+
+    public Process(int pid, int arrivalTime, int burstTime) {
+        this.pid = pid;
+        this.arrivalTime = arrivalTime;
+        this.burstTime = burstTime;
+        this.remainingTime = burstTime;
+    }
+
+    @Override
+    public int compareTo(Process other) {
+        return this.arrivalTime - other.arrivalTime;
+    }
+}
+
+public class Scheduler {
+    public static void fcfs(Process[] processes) {
+        Arrays.sort(processes);
+        double totalWT = 0, totalTAT = 0;
+
+        processes[0].completionTime = processes[0].arrivalTime + processes[0].burstTime;
+        for (int i = 1; i < processes.length; i++) {
+            if (processes[i - 1].completionTime < processes[i].arrivalTime) {
+                processes[i].completionTime = processes[i].arrivalTime + processes[i].burstTime;
+            } else {
+                processes[i].completionTime = processes[i - 1].completionTime + processes[i].burstTime;
+            }
+        }
+        for (Process process : processes) {
+            process.turnaroundTime = process.completionTime - process.arrivalTime;
+            process.waitingTime = process.turnaroundTime - process.burstTime;
+            totalWT += process.waitingTime;
+            totalTAT += process.turnaroundTime;
+        }
+        printResults(processes, totalWT, totalTAT);
+    }
+
+    public static void sjf(Process[] processes) {
+        Arrays.sort(processes);
+        int currentTime = 0, completed = 0;
+        double totalWT = 0, totalTAT = 0;
+        StringBuilder ganttChart = new StringBuilder("Gantt Chart:\n|");
+
+        while (completed < processes.length) {
+            int idx = -1, minRemaining = Integer.MAX_VALUE;
+            for (int i = 0; i < processes.length; i++) {
+                if (processes[i].arrivalTime <= currentTime && processes[i].remainingTime > 0 && processes[i].remainingTime < minRemaining) {
+                    minRemaining = processes[i].remainingTime;
+                    idx = i;
+                }
+            }
+
+            if (idx == -1) {
+                currentTime++;
+            } else {
+                ganttChart.append(" P").append(processes[idx].pid).append(" |");
+                currentTime++;
+                processes[idx].remainingTime--;
+
+                if (processes[idx].remainingTime == 0) {
+                    completed++;
+                    processes[idx].completionTime = currentTime;
+                    processes[idx].turnaroundTime = processes[idx].completionTime - processes[idx].arrivalTime;
+                    processes[idx].waitingTime = processes[idx].turnaroundTime - processes[idx].burstTime;
+                    totalWT += processes[idx].waitingTime;
+                    totalTAT += processes[idx].turnaroundTime;
+                }
+            }
+        }
+        System.out.println(ganttChart.toString());
+        printResults(processes, totalWT, totalTAT);
+    }
+
+    private static void printResults(Process[] processes, double totalWT, double totalTAT) {
+        System.out.println("\nProcess\tAT\tBT\tCT\tTAT\tWT");
+        for (Process p : processes) {
+            System.out.printf("P%d\t%d\t%d\t%d\t%d\t%d\n", p.pid, p.arrivalTime, p.burstTime, p.completionTime, p.turnaroundTime, p.waitingTime);
+        }
+        System.out.printf("\nAverage Turnaround Time: %.2f", totalTAT / processes.length);
+        System.out.printf("\nAverage Waiting Time: %.2f", totalWT / processes.length);
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter the number of processes:");
+        int numberOfProcesses = sc.nextInt();
+        Process[] processes = new Process[numberOfProcesses];
+
+        for (int i = 0; i < numberOfProcesses; i++) {
+            System.out.println("Enter Process " + (i + 1) + " Arrival time: ");
+            int at = sc.nextInt();
+            System.out.println("Enter Process " + (i + 1) + " Burst time: ");
+            int bt = sc.nextInt();
+            processes[i] = new Process(i + 1, at, bt);
+        }
+
+        while (true) {
+            System.out.println("\nChoose a Scheduling Algorithm:");
+            System.out.println("1. First-Come-First-Serve (FCFS)");
+            System.out.println("2. Shortest Job First (SJF - Preemptive)");
+            System.out.println("3. Exit");
+            System.out.print("Enter your choice: ");
+            int choice = sc.nextInt();
+
+            Process[] tempProcesses = Arrays.stream(processes).map(p -> new Process(p.pid, p.arrivalTime, p.burstTime)).toArray(Process[]::new);
+
+            switch (choice) {
+                case 1:
+                    fcfs(tempProcesses);
+                    break;
+                case 2:
+                    sjf(tempProcesses);
+                    break;
+                case 3:
+                    System.out.println("Exiting...");
+                    sc.close();
+                    return;
+                default:
+                    System.out.println("Invalid choice! Please try again.");
+            }
+        }
+    }
+}
