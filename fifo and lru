@@ -1,0 +1,139 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class PageReplacement {
+
+    public static void fifo(int frames, int[] pages) {
+        int pgf = 0, pt = 0;
+        int frame[] = new int[frames];
+
+        for (int i = 0; i < frames; i++) {
+            frame[i] = -1;
+        }
+
+        System.out.println("\nRunning FIFO Page Replacement:");
+        for (int page : pages) {
+            boolean flag = true;
+            for (int j = 0; j < frames; j++) {
+                if (page == frame[j]) {
+                    flag = false;
+                    break;
+                }
+            }
+
+            if (flag) {
+                frame[pt] = page;
+                pt = (pt + 1) % frames;
+                pgf++;
+            }
+
+            System.out.print("Frame: ");
+            for (int j = 0; j < frames; j++) {
+                System.out.print(frame[j] + " ");
+            }
+            System.out.println();
+        }
+
+        int phit = pages.length - pgf;
+        System.out.println("Page faults: " + pgf);
+        System.out.println("Page hits: " + phit);
+    }
+
+    public static void lru(int frames, int[] pages) {
+        int pgf = 0;
+        int frame[] = new int[frames];
+        int a[] = new int[frames];
+        int b[] = new int[frames];
+
+        for (int i = 0; i < frames; i++) {
+            frame[i] = -1;
+            a[i] = -1;
+            b[i] = -1;
+        }
+
+        System.out.println("\nRunning LRU Page Replacement:");
+        for (int page : pages) {
+            boolean flag = true;
+            int k = 0;
+
+            for (int j = 0; j < frames; j++) {
+                if (page == frame[j]) {
+                    flag = false;
+                    break;
+                }
+            }
+
+            if (flag) {
+                for (int j = 0; j < frames; j++) {
+                    if (frame[j] == a[frames - 1]) {
+                        k = j;
+                        break;
+                    }
+                }
+                frame[k] = page;
+                pgf++;
+            }
+
+            System.out.print("Frame: ");
+            for (int j = 0; j < frames; j++) {
+                System.out.print(frame[j] + " ");
+            }
+            System.out.println();
+
+            // Update LRU tracker
+            int p = 1;
+            b[0] = page;
+            for (int j = 0; j < a.length; j++) {
+                if (page != a[j] && p < frames) {
+                    b[p] = a[j];
+                    p++;
+                }
+            }
+            System.arraycopy(b, 0, a, 0, frames);
+        }
+
+        int phit = pages.length - pgf;
+        System.out.println("Page faults: " + pgf);
+        System.out.println("Page hits: " + phit);
+    }
+
+    public static void main(String args[]) throws IOException {
+        BufferedReader obj = new BufferedReader(new InputStreamReader(System.in));
+
+        System.out.print("Enter the number of frames: ");
+        int frames = Integer.parseInt(obj.readLine());
+
+        System.out.print("Enter the number of pages: ");
+        int n = Integer.parseInt(obj.readLine());
+
+        int[] pages = new int[n];
+        System.out.println("Enter the page numbers:");
+        for (int i = 0; i < n; i++) {
+            pages[i] = Integer.parseInt(obj.readLine());
+        }
+
+        while (true) {
+            System.out.println("\nSelect Page Replacement Algorithm:");
+            System.out.println("1. FIFO");
+            System.out.println("2. LRU");
+            System.out.println("3. Exit");
+            System.out.print("Enter your choice: ");
+            int choice = Integer.parseInt(obj.readLine());
+
+            switch (choice) {
+                case 1:
+                    fifo(frames, pages);
+                    break;
+                case 2:
+                    lru(frames, pages);
+                    break;
+                case 3:
+                    System.out.println("Exiting...");
+                    return;
+                default:
+                    System.out.println("Invalid choice! Please try again.");
+            }
+        }
+    }
+}
