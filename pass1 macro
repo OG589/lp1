@@ -1,0 +1,164 @@
+Pass1 macro processor
+check for argument list array table
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+public class MacroProcessor_PassOne {
+static List&lt;String&gt; MDT;
+static Map&lt;String, String&gt; MNT;
+static int mntPtr, mdtPtr;
+static Map&lt;String,String&gt; ALA;
+
+public static void main(String[] args) {
+try{
+pass1();
+}catch(Exception ex){
+ex.printStackTrace();
+}
+}
+static void pass1() throws Exception {
+//Initiallize data structures
+MDT = new ArrayList&lt;String&gt;();
+MNT = new LinkedHashMap&lt;String, String&gt;();
+ALA = new HashMap&lt;String,String&gt;();
+mntPtr =0; mdtPtr = 0;
+BufferedReader input = new BufferedReader(new InputStreamReader(new
+FileInputStream(&quot;//home/student/Downloads/PASS I ASSEMBLER-20240710T090734Z-
+001/PASS I MACRO/A3/input.txt&quot;)));
+
+PrintWriter out_pass1 = new PrintWriter(new
+
+FileWriter(&quot;//home/student/Downloads/PASS I ASSEMBLER-20240710T090734Z-
+001/PASS I MACRO/A3/output_pass1.txt&quot;), true);
+
+PrintWriter out_mnt = new PrintWriter(new
+
+FileWriter(&quot;//home/student/Downloads/PASS I ASSEMBLER-20240710T090734Z-
+001/PASS I MACRO/A3/MNT.txt&quot;), true);
+
+PrintWriter out_mdt = new PrintWriter(new
+
+FileWriter(&quot;//home/student/Downloads/PASS I ASSEMBLER-20240710T090734Z-
+001/PASS I MACRO/A3/MDT.txt&quot;), true);
+
+String s;
+boolean processingMacroDefinition = false;
+boolean processMacroName = false;
+System.out.println(&quot;============= Pass 1 Output ==============&quot;);
+//Read from input file one line at a time
+while((s = input.readLine()) != null) {
+//For each line, separate out the tokens
+String s_arr[] = tokenizeString(s,&quot; &quot;);
+//Analyze first token to check if it is a macro definition
+String curToken = s_arr[0];
+if(curToken.equalsIgnoreCase(&quot;MACRO&quot;)){
+processingMacroDefinition = true;
+processMacroName = true;
+}
+else if(processingMacroDefinition == true){
+if(curToken.equalsIgnoreCase(&quot;MEND&quot;)){
+MDT.add(mdtPtr++, s);
+processingMacroDefinition = false;
+continue;
+}
+//Insert Macro Name into MNT
+if(processMacroName == true){
+MNT.put(curToken, mdtPtr+&quot;&quot;);
+mntPtr++;
+processMacroName = false;
+processArgumentList(s_arr[1]);
+MDT.add(mdtPtr,s);
+mdtPtr++;
+continue;
+}
+//Convert arguments in the definition into corresponding
+
+indexed notation
+
+//ADD &amp;REG,&amp;X == ADD #2,#1
+String indexedArgList = processArguments(s_arr[1]);
+MDT.add(mdtPtr++, curToken + &quot; &quot; + indexedArgList);
+}
+else{
+//If line is not part of a Macro definition print the line as it is in
+
+the output file
+
+System.out.println(s);
+out_pass1.println(s);
+}
+}
+
+input.close();
+//Print MNT
+System.out.println(&quot;============= MNT ==============&quot;);
+Iterator&lt;String&gt; itMNT = MNT.keySet().iterator();
+String key, mntRow, mdtRow;
+while(itMNT.hasNext()){
+key = (String)itMNT.next();
+mntRow = key + &quot; &quot; + MNT.get(key);
+System.out.println(mntRow);
+out_mnt.println(mntRow);
+}
+//Print MDT
+System.out.println(&quot;============= MDT ==============&quot;);
+for(int i = 0; i &lt; MDT.size(); i++){
+mdtRow = i + &quot; &quot; + MDT.get(i);
+System.out.println(mdtRow);
+out_mdt.println(mdtRow);
+}
+out_pass1.close();
+out_mnt.close();
+out_mdt.close();
+}
+static void processArgumentList(String argList){
+StringTokenizer st = new StringTokenizer(argList, &quot;,&quot;, false);
+//For each macro definition, remove contents of the HashMap
+//which are arguments from previous macro definition
+ALA.clear();
+int argCount = st.countTokens();
+//Put all arguments for current macro definition in the HashMap
+//with argument as key and argument index as value
+String curArg;
+for(int i=1 ; i &lt;= argCount ; i++) {
+curArg = st.nextToken();
+if(curArg.contains(&quot;=&quot;)){
+curArg = curArg.substring(0,curArg.indexOf(&quot;=&quot;));
+}
+ALA.put(curArg, &quot;#&quot;+i);
+}
+}
+static String processArguments(String argList){
+StringTokenizer st = new StringTokenizer(argList, &quot;,&quot;, false);
+int argCount = st.countTokens();
+String curArg, argIndexed;
+for(int i=0 ; i &lt; argCount ; i++) {
+curArg = st.nextToken();
+argIndexed = ALA.get(curArg);
+argList = argList.replaceAll(curArg, argIndexed);
+}
+return argList;
+
+}
+static String[] tokenizeString(String str, String separator){
+StringTokenizer st = new StringTokenizer(str, separator, false);
+//Construct an array of the separated tokens
+String s_arr[] = new String[st.countTokens()];
+for(int i=0 ; i &lt; s_arr.length ; i++) {
+s_arr[i] = st.nextToken();
+}
+return s_arr;
+
+}
+}
